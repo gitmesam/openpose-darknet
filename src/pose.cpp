@@ -523,7 +523,7 @@ run_pose(int ac, char** av)
       Mat netout(
         net_outh, net_outw, CV_32F, (netoutdata + net_outh * net_outw * i));
       Mat nmsin(net_inh, net_inw, CV_32F, heatmap + net_inh * net_inw * i);
-      resize(netout, nmsin, Size(net_inw, net_inh), 0, 0, CV_INTER_CUBIC);
+      resize(netout, nmsin, Size(net_inw, net_inh), 0, 0, INTER_CUBIC);
     }
 
     // 8. get heatmap peaks
