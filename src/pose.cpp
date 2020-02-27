@@ -6,11 +6,13 @@ using namespace std;
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 #include "darknet.h"
+#include <sys/time.h>
 
 #define POSE_MAX_PEOPLE 96
 #define NET_OUT_CHANNELS 57 // 38 for pafs, 19 for parts
 
 static network* net;
+struct timeval start, stop;
 
 template<typename T>
 inline int
@@ -490,6 +492,8 @@ run_pose(int ac, char** av)
   int net_outw = net->layers[net->n - 2].out_w;
   int net_outh = net->layers[net->n - 2].out_h;
 
+  int framescount;
+  gettimeofday(&start,NULL);
   do {
     // 3. resize to net input size, put scaled image on the top left
     float scale = 0.0f;
@@ -510,12 +514,16 @@ run_pose(int ac, char** av)
     split(netim, input_channels);
 
     // 6. feed forward
-    double time_begin = getTickCount();
     network_predict(net, netin_data);
     float* netoutdata = net->output;
 
-    double fee_time = (getTickCount() - time_begin) / getTickFrequency() * 1000;
-    cout << "forward fee: " << fee_time << "ms" << endl;
+    gettimeofday(&stop,NULL);
+    framescount++;
+    if ((1e6*(stop.tv_sec-start.tv_sec) +stop.tv_usec -start.tv_usec) > 1e6){
+        printf("fps: %d\n", framescount);
+        gettimeofday(&start,NULL);
+        framescount= 0;
+        }
 
     // 7. resize net output back to input size to get heatmap
     float* heatmap = new float[net_inw * net_inh * NET_OUT_CHANNELS];
